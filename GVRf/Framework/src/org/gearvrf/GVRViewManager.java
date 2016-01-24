@@ -687,12 +687,19 @@ class GVRViewManager extends GVRContext implements RotationSensorListener {
         }
     };
 
+    long mFrameNum;
+
     /**
      * This is the code that needs to be executed before either eye is drawn.
      * 
      * @return Current time, from {@link GVRTime#getCurrentTime()}
      */
     private long doMemoryManagementAndPerFrameCallbacks() {
+        long start = System.nanoTime();
+        if (DEBUG_FRAMES_LOG_TAG != null) {
+        	Log.d(DEBUG_FRAMES_LOG_TAG, "********");
+            Log.d(DEBUG_FRAMES_LOG_TAG, "start " + mFrameNum);
+        }
         long currentTime = GVRTime.getCurrentTime();
         mFrameTime = (currentTime - mPreviousTimeNanos) / 1e9f;
         mPreviousTimeNanos = currentTime;
@@ -700,8 +707,12 @@ class GVRViewManager extends GVRContext implements RotationSensorListener {
         /*
          * Without the sensor data, can't draw a scene properly.
          */
+        int m = -1;
+        int n = -1;
+        String fl = "";
         if (!(mSensoredScene == null || !mMainScene.equals(mSensoredScene))) {
             Runnable runnable = null;
+            m = mRunnables.size();
             while ((runnable = mRunnables.poll()) != null) {
                 runnable.run();
             }
@@ -710,10 +721,24 @@ class GVRViewManager extends GVRContext implements RotationSensorListener {
             for (GVRDrawFrameListener listener : frameListeners) {
                 listener.onDrawFrame(mFrameTime);
             }
+            if (DEBUG_FRAMES_LOG_TAG != null) {
+                n = frameListeners.size();
+                fl = frameListeners.toString();
+            }
         }
 
         NativeGLDelete.processQueues();
-
+        if (DEBUG_FRAMES_LOG_TAG != null) {
+            long nanos = System.nanoTime() - start;
+            Log.d(DEBUG_FRAMES_LOG_TAG, "end " + mFrameNum++
+                    + " millis=" + (nanos / 1000 / 1000F)
+                    + " frameTime=" + mFrameTime
+                    + " runnables=" + m
+                    + " frameListeners=" + n
+//                    + " fl=" + fl
+                    );
+            Log.d(DEBUG_FRAMES_LOG_TAG, "********");
+        }
         return currentTime;
     }
 

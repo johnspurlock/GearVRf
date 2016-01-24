@@ -60,6 +60,8 @@ public abstract class GVRContext {
 
     private final GVRActivity mContext;
 
+    public static String DEBUG_FRAMES_LOG_TAG;
+
     /*
      * Fields and constants
      */
